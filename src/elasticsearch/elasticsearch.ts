@@ -29,34 +29,40 @@ class ElasticSearchDB {
     });
   }
 
+  // Does not allow boolean as return type.
   public checkIfIndex(indexName: string): any {
     return this.client.indices.exists({
       index: indexName
     });
   }
 
-  public initMapping(): any {
-    return this.client.indices.putMapping({
-      index: 'book',
-      type: 'doc',
-      body: {
-        properties: {
-          title: { type: "string" },
-          content: { type: "string" }
-        }
-      }
-    });
-  }
-
-  public addDocument(document: Document): void {
+  public addContact(contact: string): void {
+    // contact is obtained as JSON, expecting string.
+    console.log(contact);
+    let contactObj: Contact = JSON.parse(JSON.stringify(contact));
     this.client.index({
       index: 'book',
       type: 'doc',
       body: {
-        title: document.title,
-        content: document.textContent
+        "name": contactObj.name,
+        "phone": contactObj.phone,
+        "city": contactObj.city
       }
     });
+  }
+
+  public getContact(name: string): string {
+    return this.client.search({
+      index: 'book',
+      type: 'doc',
+      body: {
+        query: {
+          match: {
+            "name": name
+          }
+        }
+      }
+    }).toString();
   }
 }
 

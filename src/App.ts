@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 
-import elasticRouter from './routes/elasticRouter';
+import elasticRouter from './routes/ElasticRouter';
 
 // Creates and configures an ExpressJS web server.
 class App {
@@ -24,7 +24,7 @@ class App {
 
   // Attach any routers/route handlers that we create.
   private routes(): void {
-    this.express.use('/', elasticRouter);
+    this.express.use('/', elasticRouter.router);
   }
 }
 

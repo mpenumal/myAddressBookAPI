@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const bodyParser = require("body-parser");
-const elasticRouter_1 = require("./routes/elasticRouter");
+const ElasticRouter_1 = require("./routes/ElasticRouter");
 // Creates and configures an ExpressJS web server.
 class App {
     //Run configuration methods on the Express instance.
@@ -18,7 +18,7 @@ class App {
     }
     // Attach any routers/route handlers that we create.
     routes() {
-        this.express.use('/', elasticRouter_1.default);
+        this.express.use('/', ElasticRouter_1.default.router);
     }
 }
 exports.default = new App().express;
