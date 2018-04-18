@@ -52,6 +52,7 @@ export function getContactsConditionalDA(pageSize: number, page: number, querySt
 }
 
 export function addContactDA(contact: string) {
+  console.log(contact);
   let contactObj: Contact = JSON.parse(JSON.stringify(contact));
   let client: elasticsearch.Client = elasticClient();
   return client.index({
@@ -67,19 +68,14 @@ export function addContactDA(contact: string) {
 
 export function updateContactDA(name: string, contact: string) {
   let contactObj: Contact = JSON.parse(JSON.stringify(contact));
+  console.log(contactObj.phone);
   let client: elasticsearch.Client = elasticClient();
   return client.updateByQuery({
     index: 'book',
     type: 'doc',
     body: {
-      query: {
-        term: {
-          "name": name
-        }
-      },
-      "name": contactObj.name,
-      "phone": contactObj.phone,
-      "city": contactObj.city
+      query: { "match": { "name": name } },
+      script: "ctx._source.city =  " + "'" + contactObj.city + " ' " + ";"
     }
   });
 }

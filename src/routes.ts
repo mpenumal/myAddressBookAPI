@@ -18,7 +18,12 @@ function getContactsConditional(req: Request, res: Response, next: NextFunction)
   let queryStr: string = req.params.queryStr;
   getContactsConditionalDA(pageSize, page, queryStr)
     .then(function (x) {
-      res.json(x.responses);
+      if (x) {
+        res.json(x.responses);
+      }
+    })
+    .catch(function (x) {
+      console.log("promise rejected: " + x);
     });
 }
 
@@ -26,7 +31,12 @@ function addContact(req: Request, res: Response, next: NextFunction) {
   let contact: string = req.body;
   addContactDA(contact)
     .then(function (x) {
-      res.status = x.status;
+      if (x) {
+        res.status = x.status;
+      }
+    })
+    .catch(function (x) {
+      console.log("promise rejected: " + x);
     });
 }
 
@@ -35,26 +45,40 @@ function updateContact(req: Request, res: Response, next: NextFunction) {
   let name: string = req.params.name;
   updateContactDA(name, contact)
     .then(function (x) {
-      res.send(x.updated);
+      if (x) {
+        res.sendStatus(x.updated);
+      }
+    })
+    .catch(function (x) {
+      console.log("promise rejected: " + x);
     });
 }
 
 function getContact(req: Request, res: Response, next: NextFunction) {
   let name: string = req.params.name;
-  console.log(name);
   getContactDA(name)
     .then(function (x) {
-      res.json(x
-        .hits
-        .hits
-        .map(x => { return x._source })
-      );
+      if (x) {
+        res.json(x
+          .hits
+          .hits
+          .map(x => { return x._source })
+        );
+      }
+    })
+    .catch(function (x) {
+      console.log("promise rejected: " + x);
     });
 }
 
 function deleteContact(req: Request, res: Response, next: NextFunction) {
   deleteContactDA(name)
     .then(function (x) {
-      res.send(x.deleted);
+      if (x) {
+        res.send(x.deleted);
+      }
+    })
+    .catch(function (x) {
+      console.log("promise rejected: " + x);
     });
 }
