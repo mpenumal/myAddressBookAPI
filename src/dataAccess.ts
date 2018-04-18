@@ -1,11 +1,10 @@
 import * as elasticsearch from 'elasticsearch';
+import { Router } from 'express';
 
-class ElasticSearchDB {
-
+export class ContactDataAccess {
   // to hold reference to the elasticsearch client
   public client: elasticsearch.Client;
 
-  // Configuration of elasticsearch client
   constructor() {
     this.elasticClient();
   }
@@ -36,11 +35,21 @@ class ElasticSearchDB {
     });
   }
 
-  public addContact(contact: string): void {
-    // contact is obtained as JSON, expecting string.
-    console.log(contact);
+  public getAll() {
+    return this.client.msearch({
+      index: 'book',
+      type: 'doc',
+      body: {
+        query: {
+          match_all: {}
+        }
+      }
+    });
+  }
+
+  public addContact(contact: string) {
     let contactObj: Contact = JSON.parse(JSON.stringify(contact));
-    this.client.index({
+    return this.client.index({
       index: 'book',
       type: 'doc',
       body: {
@@ -51,7 +60,7 @@ class ElasticSearchDB {
     });
   }
 
-  public getContact(name: string): string {
+  public getContact(name: string) {
     return this.client.search({
       index: 'book',
       type: 'doc',
@@ -62,8 +71,6 @@ class ElasticSearchDB {
           }
         }
       }
-    }).toString();
+    });
   }
 }
-
-export default new ElasticSearchDB();

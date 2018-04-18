@@ -1,27 +1,40 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import ES from '../elasticsearch/elasticsearch';
+import { ContactDataAccess } from './dataAccess';
 
-export class ElasticRouter {
+export class ContactRoutes {
   router: Router
 
-  // Initialize the HeroRouter
+  // Initialize the ElasticRouter
   constructor() {
     this.router = Router();
     this.init();
   }
 
   public getAll(req: Request, res: Response, next: NextFunction) {
-    res.send("Hello");
+    let dataAccess = new ContactDataAccess();
+    res.send(dataAccess.getAll());
   }
 
   public addContact(req: Request, res: Response, next: NextFunction) {
     let contact = req.body;
-    res.send(ES.addContact(contact));
+    let dataAccess = new ContactDataAccess();
+    dataAccess.addContact(contact)
+      .then(function (x) {
+        res.status = x.status;
+      });
   }
 
   public getContact(req: Request, res: Response, next: NextFunction) {
-    let name = req.params[0];
-    res.send(ES.getContact(name));
+    let name = req.params.name;
+    let dataAccess = new ContactDataAccess();
+    let contact = dataAccess.getContact(name)
+      .then(function (x) {
+        res.json(x
+          .hits
+          .hits
+          .map(x => { return x._source })
+        );
+      });
   }
 
   //Take each handler, and attach to one of the Express.Router's endpoints.
@@ -30,11 +43,4 @@ export class ElasticRouter {
     this.router.post('/', this.addContact);
     this.router.get('/:name', this.getContact);
   }
-
 }
-
-// Create the HeroRouter, and export its configured Express.Router
-const elasticRoutes = new ElasticRouter();
-elasticRoutes.init();
-
-export default elasticRoutes;

@@ -18,7 +18,13 @@ class App {
     }
     // Attach any routers/route handlers that we create.
     routes() {
-        this.express.use('/', ElasticRouter_1.default.router);
+        // welcome page
+        let router = express.Router();
+        router.get('/', (req, res, next) => {
+            res.send("Welcome!");
+        });
+        this.express.use('/', router);
+        this.express.use('/elastic/', ElasticRouter_1.default.router);
     }
 }
 exports.default = new App().express;

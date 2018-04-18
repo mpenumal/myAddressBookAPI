@@ -1,14 +1,33 @@
 import * as http from 'http';
 import * as debug from 'debug';
+import * as path from 'path';
+import * as express from 'express';
+import * as bodyParser from 'body-parser';
 
-import App from './App';
+import { ContactRoutes } from './routes';
 
-// Use debug to set up some terminal logging for the app
 debug('ts-express:server');
+
+const app: express.Application = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+let contactRoutes = new ContactRoutes().router;
+
+app.use('/', express.Router().get('/', (req, res, next) => {
+  res.send("Welcome!");
+}));
+app.use('/contacts/', contactRoutes);
 
 // Get a port value from the environment, or set a default port number of 3000
 const port = normalizePort(process.env.PORT || 3000);
-App.set('port', port);
+app.set('port', port);
+
+// Create the HTTP server, and pass App to it (this will be our Express app)
+const server = http.createServer(app);
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
 
 function normalizePort(val: number | string): number | string | boolean {
   let port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
@@ -16,12 +35,6 @@ function normalizePort(val: number | string): number | string | boolean {
   else if (port >= 0) return port;
   else return false;
 }
-
-// Create the HTTP server, and pass App to it (this will be our Express app)
-const server = http.createServer(App);
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
 
 // Set up some basic error handling and a terminal log to show us when the app is ready and listening
 function onError(error: NodeJS.ErrnoException): void {
@@ -46,3 +59,5 @@ function onListening(): void {
   let bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
 }
+
+export default app;

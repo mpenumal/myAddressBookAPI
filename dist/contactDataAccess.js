@@ -1,24 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const elasticsearch = require("elasticsearch");
-const express_1 = require("express");
-class ElasticSearchDB {
-    // Configuration of elasticsearch client
+class ContactDataAccess {
     constructor() {
-        this.router = express_1.Router();
         this.elasticClient();
-        this.init();
     }
     elasticClient() {
         this.client = new elasticsearch.Client({
             hosts: 'localhost:9200',
             log: 'error'
         });
-    }
-    init() {
-        this.router.get('/', this.getAll);
-        this.router.post('/', this.addContact);
-        // this.router.get('/:name', this.getContact);
     }
     deleteIndex() {
         this.client.indices.delete({
@@ -48,7 +39,6 @@ class ElasticSearchDB {
         });
     }
     addContact(contact) {
-        // contact is obtained as JSON, expecting string.
         let contactObj = JSON.parse(JSON.stringify(contact));
         return this.client.index({
             index: 'book',
@@ -74,4 +64,4 @@ class ElasticSearchDB {
         });
     }
 }
-exports.default = new ElasticSearchDB();
+exports.default = new ContactDataAccess();

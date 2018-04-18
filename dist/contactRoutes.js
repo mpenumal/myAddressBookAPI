@@ -1,26 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const elasticsearch_1 = require("../elasticsearch/elasticsearch");
-class ElasticRouter {
+const contactDataAccess_1 = require("./contactDataAccess");
+class ContactRoutes {
     // Initialize the ElasticRouter
     constructor() {
         this.router = express_1.Router();
         this.init();
     }
     getAll(req, res, next) {
-        res.send(elasticsearch_1.default.getAll());
+        res.send(contactDataAccess_1.default.getAll());
     }
     addContact(req, res, next) {
         let contact = req.body;
-        elasticsearch_1.default.addContact(contact)
+        contactDataAccess_1.default.addContact(contact)
             .then(function (x) {
             res.status = x.status;
         });
     }
     getContact(req, res, next) {
         let name = req.params.name;
-        let contact = elasticsearch_1.default.getContact(name)
+        let contact = contactDataAccess_1.default.getContact(name)
             .then(function (x) {
             res.json(x
                 .hits
@@ -35,6 +35,6 @@ class ElasticRouter {
         this.router.get('/:name', this.getContact);
     }
 }
-exports.ElasticRouter = ElasticRouter;
+exports.ContactRoutes = ContactRoutes;
 // Export ElasticRouter
-exports.default = new ElasticRouter();
+exports.default = new ContactRoutes();
