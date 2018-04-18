@@ -4,20 +4,18 @@ import * as path from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 
-import { ContactRoutes } from './routes';
+import { router } from './routes';
 
 debug('ts-express:server');
 
-const app: express.Application = express();
+export const app: express.Application = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-let contactRoutes = new ContactRoutes().router;
-
 app.use('/', express.Router().get('/', (req, res, next) => {
-  res.send("Welcome!");
+  res.send("Welcome to AddressBook!");
 }));
-app.use('/contacts/', contactRoutes);
+app.use('/contact/', router);
 
 // Get a port value from the environment, or set a default port number of 3000
 const port = normalizePort(process.env.PORT || 3000);
@@ -59,5 +57,3 @@ function onListening(): void {
   let bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
 }
-
-export default app;

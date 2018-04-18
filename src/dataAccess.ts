@@ -1,76 +1,115 @@
 import * as elasticsearch from 'elasticsearch';
 import { Router } from 'express';
 
-export class ContactDataAccess {
-  // to hold reference to the elasticsearch client
-  public client: elasticsearch.Client;
+function elasticClient(): elasticsearch.Client {
+  return new elasticsearch.Client({
+    hosts: 'localhost:9200',
+    log: 'error'
+  });
+}
 
-  constructor() {
-    this.elasticClient();
-  }
+function deleteIndex(): void {
+  let client: elasticsearch.Client = elasticClient();
+  client.indices.delete({
+    index: 'book'
+  });
+}
 
-  private elasticClient(): void {
-    this.client = new elasticsearch.Client({
-      hosts: 'localhost:9200',
-      log: 'error'
-    });
-  }
+function createIndex(): void {
+  let client: elasticsearch.Client = elasticClient();
+  client.indices.create({
+    index: 'book'
+  });
+}
 
-  public deleteIndex(): void {
-    this.client.indices.delete({
-      index: 'book'
-    });
-  }
+// Does not allow boolean as return type.
+export function checkIfIndexDA(indexName: string): any {
+  let client: elasticsearch.Client = elasticClient();
+  return client.indices.exists({
+    index: indexName
+  });
+}
 
-  public createIndex(): void {
-    this.client.indices.create({
-      index: 'book'
-    });
-  }
-
-  // Does not allow boolean as return type.
-  public checkIfIndex(indexName: string): any {
-    return this.client.indices.exists({
-      index: indexName
-    });
-  }
-
-  public getAll() {
-    return this.client.msearch({
-      index: 'book',
-      type: 'doc',
-      body: {
+export function getContactsConditionalDA(pageSize: number, page: number, queryStr: string) {
+  let client: elasticsearch.Client = elasticClient();
+  return client.msearch({
+    body: [
+      {
+        index: 'book',
+        type: 'doc'
+      },
+      {
         query: {
-          match_all: {}
-        }
-      }
-    });
-  }
-
-  public addContact(contact: string) {
-    let contactObj: Contact = JSON.parse(JSON.stringify(contact));
-    return this.client.index({
-      index: 'book',
-      type: 'doc',
-      body: {
-        "name": contactObj.name,
-        "phone": contactObj.phone,
-        "city": contactObj.city
-      }
-    });
-  }
-
-  public getContact(name: string) {
-    return this.client.search({
-      index: 'book',
-      type: 'doc',
-      body: {
-        query: {
-          match: {
-            "name": name
+          query_string: {
+            query: queryStr
           }
+        },
+        from: page,
+        size: pageSize
+      },
+    ]
+  });
+}
+
+export function addContactDA(contact: string) {
+  let contactObj: Contact = JSON.parse(JSON.stringify(contact));
+  let client: elasticsearch.Client = elasticClient();
+  return client.index({
+    index: 'book',
+    type: 'doc',
+    body: {
+      "name": contactObj.name,
+      "phone": contactObj.phone,
+      "city": contactObj.city
+    }
+  });
+}
+
+export function updateContactDA(name: string, contact: string) {
+  let contactObj: Contact = JSON.parse(JSON.stringify(contact));
+  let client: elasticsearch.Client = elasticClient();
+  return client.updateByQuery({
+    index: 'book',
+    type: 'doc',
+    body: {
+      query: {
+        term: {
+          "name": name
+        }
+      },
+      "name": contactObj.name,
+      "phone": contactObj.phone,
+      "city": contactObj.city
+    }
+  });
+}
+
+export function getContactDA(name: string) {
+  let client: elasticsearch.Client = elasticClient();
+  return client.search({
+    index: 'book',
+    type: 'doc',
+    body: {
+      query: {
+        match: {
+          "name": name
         }
       }
-    });
-  }
+    }
+  });
+}
+
+export function deleteContactDA(name: string) {
+  let client: elasticsearch.Client = elasticClient();
+  return client.deleteByQuery({
+    index: 'book',
+    type: 'doc',
+    body: {
+      query: {
+        term: {
+          "name": name
+        }
+      }
+    }
+  });
 }

@@ -1,46 +1,60 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { ContactDataAccess } from './dataAccess';
+import {
+  getContactDA, addContactDA,
+  updateContactDA, deleteContactDA,
+  getContactsConditionalDA, checkIfIndexDA
+} from './dataAccess';
 
-export class ContactRoutes {
-  router: Router
+export const router: Router = Router();
+this.router.get('/pageSize={:pageSize}&page={:page}&query={:queryStr}', getContactsConditional);
+this.router.post('/', addContact);
+this.router.get('/:name', getContact);
+this.router.put('/:name', updateContact);
+this.router.delete('/:name', deleteContact);
 
-  // Initialize the ElasticRouter
-  constructor() {
-    this.router = Router();
-    this.init();
-  }
+function getContactsConditional(req: Request, res: Response, next: NextFunction) {
+  let pageSize: number = req.params.pageSize;
+  let page: number = req.params.page;
+  let queryStr: string = req.params.queryStr;
+  getContactsConditionalDA(pageSize, page, queryStr)
+    .then(function (x) {
+      res.json(x.responses);
+    });
+}
 
-  public getAll(req: Request, res: Response, next: NextFunction) {
-    let dataAccess = new ContactDataAccess();
-    res.send(dataAccess.getAll());
-  }
+function addContact(req: Request, res: Response, next: NextFunction) {
+  let contact: string = req.body;
+  addContactDA(contact)
+    .then(function (x) {
+      res.status = x.status;
+    });
+}
 
-  public addContact(req: Request, res: Response, next: NextFunction) {
-    let contact = req.body;
-    let dataAccess = new ContactDataAccess();
-    dataAccess.addContact(contact)
-      .then(function (x) {
-        res.status = x.status;
-      });
-  }
+function updateContact(req: Request, res: Response, next: NextFunction) {
+  let contact: string = req.body;
+  let name: string = req.params.name;
+  updateContactDA(name, contact)
+    .then(function (x) {
+      res.send(x.updated);
+    });
+}
 
-  public getContact(req: Request, res: Response, next: NextFunction) {
-    let name = req.params.name;
-    let dataAccess = new ContactDataAccess();
-    let contact = dataAccess.getContact(name)
-      .then(function (x) {
-        res.json(x
-          .hits
-          .hits
-          .map(x => { return x._source })
-        );
-      });
-  }
+function getContact(req: Request, res: Response, next: NextFunction) {
+  let name: string = req.params.name;
+  console.log(name);
+  getContactDA(name)
+    .then(function (x) {
+      res.json(x
+        .hits
+        .hits
+        .map(x => { return x._source })
+      );
+    });
+}
 
-  //Take each handler, and attach to one of the Express.Router's endpoints.
-  init() {
-    this.router.get('/', this.getAll);
-    this.router.post('/', this.addContact);
-    this.router.get('/:name', this.getContact);
-  }
+function deleteContact(req: Request, res: Response, next: NextFunction) {
+  deleteContactDA(name)
+    .then(function (x) {
+      res.send(x.deleted);
+    });
 }

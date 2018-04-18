@@ -2,40 +2,50 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const dataAccess_1 = require("./dataAccess");
-class ContactRoutes {
-    // Initialize the ElasticRouter
-    constructor() {
-        this.router = express_1.Router();
-        this.init();
-    }
-    getAll(req, res, next) {
-        let dataAccess = new dataAccess_1.ContactDataAccess();
-        res.send(dataAccess.getAll());
-    }
-    addContact(req, res, next) {
-        let contact = req.body;
-        let dataAccess = new dataAccess_1.ContactDataAccess();
-        dataAccess.addContact(contact)
-            .then(function (x) {
-            res.status = x.status;
-        });
-    }
-    getContact(req, res, next) {
-        let name = req.params.name;
-        let dataAccess = new dataAccess_1.ContactDataAccess();
-        let contact = dataAccess.getContact(name)
-            .then(function (x) {
-            res.json(x
-                .hits
-                .hits
-                .map(x => { return x._source; }));
-        });
-    }
-    //Take each handler, and attach to one of the Express.Router's endpoints.
-    init() {
-        this.router.get('/', this.getAll);
-        this.router.post('/', this.addContact);
-        this.router.get('/:name', this.getContact);
-    }
+exports.router = express_1.Router();
+this.router.get('/pageSize={:pageSize}&page={:page}&query={:queryStr}', getContactsConditional);
+this.router.post('/', addContact);
+this.router.get('/:name', getContact);
+this.router.put('/:name', updateContact);
+this.router.delete('/:name', deleteContact);
+function getContactsConditional(req, res, next) {
+    let pageSize = req.params.pageSize;
+    let page = req.params.page;
+    let queryStr = req.params.queryStr;
+    dataAccess_1.getContactsConditionalDA(pageSize, page, queryStr)
+        .then(function (x) {
+        res.json(x.responses);
+    });
 }
-exports.ContactRoutes = ContactRoutes;
+function addContact(req, res, next) {
+    let contact = req.body;
+    dataAccess_1.addContactDA(contact)
+        .then(function (x) {
+        res.status = x.status;
+    });
+}
+function updateContact(req, res, next) {
+    let contact = req.body;
+    let name = req.params.name;
+    dataAccess_1.updateContactDA(name, contact)
+        .then(function (x) {
+        res.send(x.updated);
+    });
+}
+function getContact(req, res, next) {
+    let name = req.params.name;
+    console.log(name);
+    dataAccess_1.getContactDA(name)
+        .then(function (x) {
+        res.json(x
+            .hits
+            .hits
+            .map(x => { return x._source; }));
+    });
+}
+function deleteContact(req, res, next) {
+    dataAccess_1.deleteContactDA(name)
+        .then(function (x) {
+        res.send(x.deleted);
+    });
+}
