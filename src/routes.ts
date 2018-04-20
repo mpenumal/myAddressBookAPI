@@ -7,10 +7,13 @@ import {
 
 function RunOperation(target: Routes, property: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
-  descriptor.value = function (req: Request, res: Response) {
-    return originalMethod(req, res)
-      .then((x: Response) => { res.json(x) })
-      .catch((x: Response) => { res.send(x) });
+  descriptor.value = async function (req: Request, res: Response) {
+    try {
+      const result = await originalMethod(req, res);
+      res.json(result);
+    } catch (e) {
+      throw new Error(e);
+    }
   }
 }
 

@@ -19,9 +19,15 @@ const dataAccess_1 = require("./dataAccess");
 function RunOperation(target, property, descriptor) {
     const originalMethod = descriptor.value;
     descriptor.value = function (req, res) {
-        return originalMethod(req, res)
-            .then((x) => { res.json(x); })
-            .catch((x) => { res.send(x); });
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const result = yield originalMethod(req, res);
+                res.json(result);
+            }
+            catch (e) {
+                throw new Error(e);
+            }
+        });
     };
 }
 class Routes {

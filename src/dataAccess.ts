@@ -2,121 +2,126 @@ import * as elasticsearch from 'elasticsearch';
 import { Router } from 'express';
 import { config } from './config/default';
 
-function elasticClient() {
-  return new elasticsearch.Client({
-    hosts: config.hosts,
-    log: 'error'
-  });
+class ElasticClient {
+  static client: elasticsearch.Client = ElasticClient.elasticClient();
+  static elasticClient() {
+    return new elasticsearch.Client({
+      hosts: 'localhost:9200',
+      log: 'error'
+    });
+  }
 }
 
-function deleteIndex() {
-  const client = elasticClient();
-  return client.indices.delete({
-    index: config.index
-  });
+export async function deleteIndex(index: string) {
+  try {
+    await ElasticClient.client.indices.delete({ index });
+  } catch (e) {
+    return e;
+  }
 }
 
-function createIndex(timeout = '5') {
-  const client = elasticClient();
-  return client.indices.create({
-    index: config.index,
-    timeout
-  });
+async function createIndex(index: string) {
+  try {
+    await ElasticClient.client.indices.create({ index });
+  } catch (e) {
+    return e;
+  }
 }
 
 // Does not allow boolean as return type.
 export async function checkIfIndexDA(index: string) {
   try {
-    await elasticClient().indices.exists({ index });
+    await ElasticClient.client.indices.exists({ index });
   } catch {
-    await createIndex();
-    return true;
+    try {
+      await createIndex(index);
+    } catch (e) {
+      return e;
+    }
   }
 }
 
-export function getContactsConditionalDA(pageSize: number, page: number, queryStr: string) {
-  const client = elasticClient();
-  return client.search({
-    index: config.index,
-    type: config.type,
-    body: {
-      query: {
-        query_string: {
-          fields: ['name', 'phone', 'city'],
-          query: `'${queryStr}'`
-        },
-        from: page,
-        size: pageSize
-      }
-    }
-  })
-    .then(results => results.hits.hits.map(x => x._source as Contact))
-    .catch(x => {
-      throw new Error(`Cannot get the requested contacts. ${x}`);
+export async function getContactsConditionalDA(size: number, from: number, query: string) {
+  try {
+    const results = await ElasticClient.client.msearch({
+      body: [
+        { ...config },
+        {
+          query: {
+            query_string: { query }
+          },
+          from,
+          size
+        }
+      ]
     });
+    return results.responses !== undefined
+      ? results.responses.map((responses) => responses.hits.hits.map((x) => x._source as Contact))
+      : [];
+  } catch (e) {
+    throw new Error(`Cannot get the requested contacts. ${e}`);
+  }
 }
 
-export function getContactDA(name: string) {
-  const client = elasticClient();
-  return client.search({
-    index: config.index,
-    type: config.type,
-    body: {
-      query: {
-        match: {
-          name
+export async function getContactDA(name: string) {
+  try {
+    const result = await ElasticClient.client.search({
+      ...config,
+      body: {
+        query: {
+          match: {
+            name
+          }
         }
       }
-    }
-  })
-    .then(results => results.hits.hits.map(x => x._source as Contact))
-    .catch(x => {
-      throw new Error(`Cannot get the requested contacts. ${x}`);
     });
+    return result.hits.hits[0]._source as Contact;
+  } catch (e) {
+    throw new Error(`Cannot get the requested contact. ${e}`);
+  }
 }
 
-export function addContactDA(contact: Contact) {
-  const client = elasticClient();
-  return client.index({
-    index: config.index,
-    type: config.type,
-    body: contact
-  })
-    .then(x => 'Add Contact - Success.')
-    .catch(x => `Cannot add contact. ${x}`);
+export async function addContactDA(contact: Contact) {
+  try {
+    const result = await ElasticClient.client.index({
+      ...config,
+      body: contact
+    });
+    return `Add Contact - Success.`;
+  } catch (e) {
+    throw new Error(`Cannot add contact. ${e}`);
+  }
 }
 
-export function updateContactDA(name: string, contact: Contact) {
-  const client = elasticClient();
-  return client.updateByQuery({
-    index: config.index,
-    type: config.type,
-    body: {
-      query: { match: { name } },
-      script: `ctx._source.name = '${contact.name}';
-      ctx._source.phone = '${contact.phone}';
-      ctx._source.city = '${contact.city}';`
-    }
-  })
-    .then(x => `Update Contact - Success.`)
-    .catch(x => `Cannot update contact. ${x}`);
-}
-
-export function deleteContactDA(name: string) {
-  const client = elasticClient();
-  return client.deleteByQuery({
-    index: config.index,
-    type: config.type,
-    body: {
-      query: {
-        match: {
-          name
-        }
+export async function updateContactDA(name: string, contact: Contact) {
+  try {
+    const result = await ElasticClient.client.updateByQuery({
+      ...config,
+      body: {
+        query: { match: { name } },
+        script: `ctx._source.name = '${contact.name}';
+        ctx._source.phone = '${contact.phone}';
+        ctx._source.city = '${contact.city}';`
       }
-    }
-  })
-    .then(x => `Delete Contact - Success.`)
-    .catch(x => `Cannot delete contact. ${x}`);
+    });
+    return `Update Contact - Success.`;
+  } catch (e) {
+    throw new Error(`Cannot update contact. ${e}`);
+  }
+}
+
+export async function deleteContactDA(name: string) {
+  try {
+    const result = await ElasticClient.client.deleteByQuery({
+      ...config,
+      body: {
+        query: { match: { name } }
+      }
+    });
+    return `Delete Contact - Success.`;
+  } catch (e) {
+    throw new Error(`Cannot delete contact. ${e}`);
+  }
 }
 
 /*
