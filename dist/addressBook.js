@@ -10,9 +10,9 @@ exports.app = express();
 exports.app.use(bodyParser.json());
 exports.app.use(bodyParser.urlencoded({ extended: false }));
 exports.app.use('/', express.Router().get('/', (req, res, next) => {
-    res.send("Welcome to AddressBook!");
+    res.send('Welcome to AddressBook!');
 }));
-exports.app.use('/contact/', routes_1.router);
+exports.app.use('/contact', routes_1.router);
 // Get a port value from the environment, or set a default port number of 3000
 const port = normalizePort(process.env.PORT || 3000);
 exports.app.set('port', port);
@@ -22,19 +22,23 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 function normalizePort(val) {
-    let port = (typeof val === 'string') ? parseInt(val, 10) : val;
-    if (isNaN(port))
+    const tempPort = (typeof val === 'string') ? parseInt(val, 10) : val;
+    if (isNaN(tempPort)) {
         return val;
-    else if (port >= 0)
-        return port;
-    else
+    }
+    else if (tempPort >= 0) {
+        return tempPort;
+    }
+    else {
         return false;
+    }
 }
 // Set up some basic error handling and a terminal log to show us when the app is ready and listening
 function onError(error) {
-    if (error.syscall !== 'listen')
+    if (error.syscall !== 'listen') {
         throw error;
-    let bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
+    }
+    const bind = (typeof port === 'string') ? `Pipe ${port}` : `Port ${port}`;
     switch (error.code) {
         case 'EACCES':
             console.error(`${bind} requires elevated privileges`);
@@ -49,7 +53,7 @@ function onError(error) {
     }
 }
 function onListening() {
-    let addr = server.address();
-    let bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+    const addr = server.address();
+    const bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
     debug(`Listening on ${bind}`);
 }
